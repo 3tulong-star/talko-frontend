@@ -4,8 +4,8 @@ import AVFoundation
 
 @MainActor
 final class ConversationViewModel: ObservableObject {
-    private let wsURL = URL(string: "wss://tulong.zeabur.app/api/v1/asr/realtime")!
-    private let httpBase = URL(string: "https://tulong.zeabur.app")!
+    private let wsURL = AppConfig.wsRealtimeURL
+    private let httpBase = AppConfig.httpBaseURL
 
     @Published var langA: LangOption = supportedLangs.first(where: { $0.id == "zh" })!
     @Published var langB: LangOption = supportedLangs.first(where: { $0.id == "en" })!

@@ -6,11 +6,35 @@ struct Conversation: Identifiable, Codable {
     let title: String?
     let langLeft: String
     let langRight: String
-    let createdAt: Date
-    let updatedAt: Date
+    let createdAt: Date?
+    let updatedAt: Date?
     let lastMessageAt: Date?
     let isArchived: Bool
     let expireAt: Date?
+
+    enum CodingKeys: String, CodingKey {
+        case id, title, langLeft, langRight, isArchived
+        case createdAtISO, updatedAtISO, lastMessageAtISO, expireAtISO
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        title = try c.decodeIfPresent(String.self, forKey: .title)
+        langLeft = try c.decode(String.self, forKey: .langLeft)
+        langRight = try c.decode(String.self, forKey: .langRight)
+        isArchived = try c.decodeIfPresent(Bool.self, forKey: .isArchived) ?? false
+
+        func parseISO(_ s: String?) -> Date? {
+            guard let s else { return nil }
+            return ISO8601DateFormatter().date(from: s)
+        }
+
+        createdAt = parseISO(try c.decodeIfPresent(String.self, forKey: .createdAtISO))
+        updatedAt = parseISO(try c.decodeIfPresent(String.self, forKey: .updatedAtISO))
+        lastMessageAt = parseISO(try c.decodeIfPresent(String.self, forKey: .lastMessageAtISO))
+        expireAt = parseISO(try c.decodeIfPresent(String.self, forKey: .expireAtISO))
+    }
 }
 
 struct HistoryMessage: Identifiable, Codable {
@@ -20,14 +44,37 @@ struct HistoryMessage: Identifiable, Codable {
     let targetLang: String
     let originalText: String
     let translatedText: String?
-    let createdAt: Date
+    let createdAt: Date?
     let expireAt: Date?
+
+    enum CodingKeys: String, CodingKey {
+        case id, side, sourceLang, targetLang, originalText, translatedText
+        case createdAtISO, expireAtISO
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        side = try c.decode(String.self, forKey: .side)
+        sourceLang = try c.decode(String.self, forKey: .sourceLang)
+        targetLang = try c.decode(String.self, forKey: .targetLang)
+        originalText = try c.decode(String.self, forKey: .originalText)
+        translatedText = try c.decodeIfPresent(String.self, forKey: .translatedText)
+
+        func parseISO(_ s: String?) -> Date? {
+            guard let s else { return nil }
+            return ISO8601DateFormatter().date(from: s)
+        }
+
+        createdAt = parseISO(try c.decodeIfPresent(String.self, forKey: .createdAtISO))
+        expireAt = parseISO(try c.decodeIfPresent(String.self, forKey: .expireAtISO))
+    }
 }
 
 @MainActor
 final class HistoryManager: ObservableObject {
     static let shared = HistoryManager()
-    private let httpBase = URL(string: "https://tulong.zeabur.app")!
+    private let httpBase = AppConfig.httpBaseURL
     
     @Published var conversations: [Conversation] = []
     @Published var isLoading = false
