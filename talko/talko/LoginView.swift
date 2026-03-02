@@ -32,6 +32,22 @@ struct LoginView: View {
                 
                 // Login Buttons
                 VStack(spacing: 16) {
+                    Button {
+                        authManager.continueAsGuest()
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: "person.fill.questionmark")
+                            Text("游客模式（快速体验）")
+                                .font(.system(size: 18, weight: .semibold))
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 54)
+                        .background(Color.orange)
+                        .cornerRadius(27)
+                    }
+                    .padding(.horizontal, 40)
+
                     // Apple Sign In
                     SignInWithAppleButton(.signIn) { request in
                         let nonce = authManager.startAppleSignIn()

@@ -89,6 +89,13 @@ struct ModeSelectionView: View {
     }
 
     private func refreshUsage() async {
+        if AuthManager.shared.isGuestMode {
+            usageText = "游客模式：不校验时长（仅用于快速测试）"
+            usageTextColor = .orange
+            remainingSeconds = nil
+            return
+        }
+
         guard let token = await AuthManager.shared.getIDToken() else {
             usageText = "未登录，无法获取时长"
             usageTextColor = .red

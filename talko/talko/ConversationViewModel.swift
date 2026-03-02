@@ -383,14 +383,19 @@ final class ConversationViewModel: ObservableObject {
     }
 
     private func authorizedRealtimeWsURL() async -> URL? {
-        guard let token = await AuthManager.shared.getIDToken() else { return nil }
         guard var c = URLComponents(url: wsURL, resolvingAgainstBaseURL: false) else { return nil }
 
         var items = c.queryItems ?? []
-        items.removeAll { $0.name == "token" }
-        items.append(URLQueryItem(name: "token", value: token))
-        c.queryItems = items
+        items.removeAll { $0.name == "token" || $0.name == "guest" }
 
+        if AuthManager.shared.isGuestMode {
+            items.append(URLQueryItem(name: "guest", value: "1"))
+        } else {
+            guard let token = await AuthManager.shared.getIDToken() else { return nil }
+            items.append(URLQueryItem(name: "token", value: token))
+        }
+
+        c.queryItems = items
         return c.url
     }
 

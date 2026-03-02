@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import FirebaseAuth
+import FirebaseCore
 import AuthenticationServices
 import CryptoKit
 import GoogleSignIn
@@ -10,6 +11,7 @@ final class AuthManager: ObservableObject {
     static let shared = AuthManager()
     
     @Published var user: User?
+    @Published var isGuestMode = false
     @Published var isLoading = false
     
     private var currentNonce: String?
@@ -33,7 +35,11 @@ final class AuthManager: ObservableObject {
     }
     
     var isAuthenticated: Bool {
-        return user != nil
+        return isGuestMode || user != nil
+    }
+
+    func continueAsGuest() {
+        isGuestMode = true
     }
     
     func getIDToken() async -> String? {
@@ -47,6 +53,7 @@ final class AuthManager: ObservableObject {
     }
     
     func signOut() {
+        isGuestMode = false
         do {
             try Auth.auth().signOut()
             GIDSignIn.sharedInstance.signOut()
