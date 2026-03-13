@@ -1,0 +1,44 @@
+"login_subtitle" = "リアルタイム音声翻訳アシスタント";
+"login_guest_mode" = "ゲストモード（クイック体験）";
+"login_google" = "Googleで続行";
+"login_terms" = "続行すると、利用規約とプライバシーポリシーに同意したものとみなされます。";
+"login_failed" = "ログインに失敗しました";
+"ok" = "OK";
+
+"usage_loading" = "残り時間を読み込み中...";
+"logout" = "ログアウト";
+"mode_subtitle" = "翻訳モードを選択してください";
+"mode_dual_title" = "デュアルボタンモード";
+"mode_dual_desc" = "発話の切り替えを手動で制御し、正確な会話を実現します。";
+"mode_single_title" = "シングルボタンモード";
+"mode_single_desc" = "交互に話すと、言語方向を自動判定します。";
+"mode_live_title" = "ライブモード";
+"mode_live_desc" = "ボタン操作なしで、継続的に文を区切って認識します。";
+"usage_guest" = "ゲストモード：利用時間制限はチェックされません（クイックテスト用）。";
+"usage_not_logged_in" = "未ログインのため利用時間を取得できません。";
+"usage_failed_no_response" = "利用時間の取得に失敗しました：無効な応答です。";
+"usage_failed_http" = "利用時間の取得に失敗しました（HTTP %d）。";
+"usage_summary" = "使用 %d 分 / 合計 %d 分、残り約 %d 分";
+"usage_failed_network" = "利用時間の取得に失敗しました（ネットワーク/解析エラー）。";
+
+"back" = "戻る";
+"logout_short" = "終了";
+"auto_speak" = "自動読み上げ";
+"live_no_tts" = "ライブモードでは読み上げしません";
+"choose_language" = "言語を選択";
+"hold_to_talk" = "押して話す";
+"hold_to_talk_short" = "押す";
+"live_start" = "ライブ開始";
+"live_stop" = "ライブ停止";
+"listening" = "聞き取り中...";
+"translation_failed" = "[翻訳に失敗しました]";
+
+"lang_name_zh" = "中国語";
+"lang_name_en" = "英語";
+"lang_name_ja" = "日本語";
+"lang_name_ko" = "韓国語";
+
+"hold_to_talk_zh" = "押して話す";
+"hold_to_talk_en" = "押して話す";
+"hold_to_talk_ja" = "押して話す";
+"hold_to_talk_ko" = "押して話す";

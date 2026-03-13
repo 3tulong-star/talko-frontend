@@ -4,6 +4,8 @@ struct RealtimeConfig {
     let mode: String      // "dual_button" | "single_button" | "live"
     let leftLang: String  // e.g. "zh"
     let rightLang: String // e.g. "en"
+    let asrProvider: String? // e.g. "qwen" | "openai"
+    let asrModel: String?    // e.g. "qwen3-asr-flash-realtime" | "gpt-4o-transcribe"
 }
 
 final class RealtimeWSClient: NSObject, URLSessionWebSocketDelegate {
@@ -21,7 +23,7 @@ final class RealtimeWSClient: NSObject, URLSessionWebSocketDelegate {
     var onError: ((String) -> Void)?
 
     // Debug: 打印原始 WS JSON
-    var debugLogRawMessages: Bool = true // 默认开启调试日志
+    var debugLogRawMessages: Bool = false
 
     func connect(url: URL, config: RealtimeConfig) {
         disconnect()
@@ -38,23 +40,28 @@ final class RealtimeWSClient: NSObject, URLSessionWebSocketDelegate {
         // 决定 turn_detection 配置
         let turnDetection: Any = (config.mode == "live") ? [
             "type": "server_vad",
-            "threshold": 0.5,
+            "threshold": 0.6,
             "prefix_padding_ms": 300,
-            "silence_duration_ms": 1000
+            "silence_duration_ms": 800
         ] : NSNull()
 
         // 首条消息: session.update，带上 UI 模式和左右语言
+        var sessionPayload: [String: Any] = [
+            "model": config.asrModel ?? "qwen3-asr-flash-realtime",
+            "input_audio_format": "pcm",
+            "sample_rate": 16000,
+            "turn_detection": turnDetection,
+            "mode": config.mode,
+            "left_lang": config.leftLang,
+            "right_lang": config.rightLang
+        ]
+        if let p = config.asrProvider {
+            sessionPayload["provider"] = p
+        }
+
         let msg: [String: Any] = [
             "type": "session.update",
-            "session": [
-                "model": "qwen3-asr-flash-realtime",
-                "input_audio_format": "pcm",
-                "sample_rate": 16000,
-                "turn_detection": turnDetection,
-                "mode": config.mode,
-                "left_lang": config.leftLang,
-                "right_lang": config.rightLang
-            ]
+            "session": sessionPayload
         ]
         sendJSON(msg)
         receiveLoop()
@@ -70,6 +77,10 @@ final class RealtimeWSClient: NSObject, URLSessionWebSocketDelegate {
 
     func finish() {
         sendJSON(["type": "session.finish"])
+    }
+
+    func sendInterrupt() {
+        sendJSON(["type": "interrupt"])
     }
 
     func disconnect() {
@@ -118,6 +129,8 @@ final class RealtimeWSClient: NSObject, URLSessionWebSocketDelegate {
         } else if type == "conversation.item.input_audio_transcription.completed" {
             let transcript = obj["transcript"] as? String ?? ""
             onFinalText?(transcript)
+            onFinalEvent?(obj)
+        } else if type == "session.finished" {
             onFinalEvent?(obj)
         } else if type == "error" {
             if let e = obj["error"] as? [String: Any] {

@@ -1,0 +1,44 @@
+"login_subtitle" = "Assistente di traduzione vocale in tempo reale";
+"login_guest_mode" = "Modalità ospite (prova rapida)";
+"login_google" = "Continua con Google";
+"login_terms" = "Continuando, accetti i nostri Termini di servizio e l'Informativa sulla privacy.";
+"login_failed" = "Accesso non riuscito";
+"ok" = "OK";
+
+"usage_loading" = "Caricamento tempo rimanente...";
+"logout" = "Disconnetti";
+"mode_subtitle" = "Scegli la modalità di traduzione";
+"mode_dual_title" = "Modalità doppio pulsante";
+"mode_dual_desc" = "Controlla manualmente i turni di parola per conversazioni precise.";
+"mode_single_title" = "Modalità pulsante singolo";
+"mode_single_desc" = "Parlate a turno; la direzione linguistica viene rilevata automaticamente.";
+"mode_live_title" = "Modalità Live";
+"mode_live_desc" = "Conversazione libera con segmentazione continua delle frasi.";
+"usage_guest" = "Modalità ospite: il limite d'uso non viene verificato (solo test rapido).";
+"usage_not_logged_in" = "Non hai effettuato l'accesso. Impossibile ottenere l'utilizzo.";
+"usage_failed_no_response" = "Impossibile caricare utilizzo: risposta non valida.";
+"usage_failed_http" = "Impossibile caricare utilizzo (HTTP %d).";
+"usage_summary" = "%d min usati / %d min totali, circa %d min rimanenti";
+"usage_failed_network" = "Impossibile caricare utilizzo (errore rete/parsing).";
+
+"back" = "Indietro";
+"logout_short" = "Esci";
+"auto_speak" = "Lettura automatica";
+"live_no_tts" = "Nessun TTS in modalità Live";
+"choose_language" = "Scegli lingua";
+"hold_to_talk" = "Tieni premuto per parlare";
+"hold_to_talk_short" = "Parla";
+"live_start" = "Avvia Live";
+"live_stop" = "Ferma Live";
+"listening" = "In ascolto...";
+"translation_failed" = "[Traduzione non riuscita]";
+
+"lang_name_zh" = "Cinese";
+"lang_name_en" = "Inglese";
+"lang_name_ja" = "Giapponese";
+"lang_name_ko" = "Coreano";
+
+"hold_to_talk_zh" = "Tieni premuto per parlare";
+"hold_to_talk_en" = "Tieni premuto per parlare";
+"hold_to_talk_ja" = "Tieni premuto per parlare";
+"hold_to_talk_ko" = "Tieni premuto per parlare";

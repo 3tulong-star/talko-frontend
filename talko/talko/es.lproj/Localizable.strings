@@ -1,0 +1,44 @@
+"login_subtitle" = "Asistente de traducción de voz en tiempo real";
+"login_guest_mode" = "Modo invitado (prueba rápida)";
+"login_google" = "Continuar con Google";
+"login_terms" = "Al continuar, aceptas nuestros Términos y Política de privacidad.";
+"login_failed" = "Error de inicio de sesión";
+"ok" = "OK";
+
+"usage_loading" = "Cargando tiempo restante...";
+"logout" = "Cerrar sesión";
+"mode_subtitle" = "Elige tu modo de traducción";
+"mode_dual_title" = "Modo de doble botón";
+"mode_dual_desc" = "Controla manualmente los turnos de habla para conversaciones precisas.";
+"mode_single_title" = "Modo de botón único";
+"mode_single_desc" = "Hablen por turnos; la dirección del idioma se detecta automáticamente.";
+"mode_live_title" = "Modo Live";
+"mode_live_desc" = "Conversación libre con segmentación continua de frases.";
+"usage_guest" = "Modo invitado: no se verifica el límite de uso (solo prueba rápida).";
+"usage_not_logged_in" = "No has iniciado sesión. No se puede obtener el uso.";
+"usage_failed_no_response" = "Error al cargar uso: respuesta inválida.";
+"usage_failed_http" = "Error al cargar uso (HTTP %d).";
+"usage_summary" = "%d min usados / %d min totales, aprox. %d min restantes";
+"usage_failed_network" = "Error al cargar uso (red/análisis).";
+
+"back" = "Volver";
+"logout_short" = "Salir";
+"auto_speak" = "Reproducción automática";
+"live_no_tts" = "Sin TTS en modo Live";
+"choose_language" = "Elegir idioma";
+"hold_to_talk" = "Mantén pulsado para hablar";
+"hold_to_talk_short" = "Mantén";
+"live_start" = "Iniciar Live";
+"live_stop" = "Detener Live";
+"listening" = "Escuchando...";
+"translation_failed" = "[Error de traducción]";
+
+"lang_name_zh" = "Chino";
+"lang_name_en" = "Inglés";
+"lang_name_ja" = "Japonés";
+"lang_name_ko" = "Coreano";
+
+"hold_to_talk_zh" = "Mantén pulsado para hablar";
+"hold_to_talk_en" = "Mantén pulsado para hablar";
+"hold_to_talk_ja" = "Mantén pulsado para hablar";
+"hold_to_talk_ko" = "Mantén pulsado para hablar";

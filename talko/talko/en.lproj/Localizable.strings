@@ -1,0 +1,49 @@
+"login_subtitle" = "Real-time voice translation assistant";
+"login_guest_mode" = "Guest Mode (Quick Try)";
+"login_google" = "Continue with Google";
+"login_terms" = "By continuing, you agree to our Terms and Privacy Policy.";
+"login_failed" = "Login Failed";
+"ok" = "OK";
+
+"usage_loading" = "Loading remaining time...";
+"logout" = "Log out";
+"mode_subtitle" = "Choose your preferred translation mode";
+"mode_dual_title" = "Dual Button Mode";
+"mode_dual_desc" = "Manually control speaking turns for precise conversations.";
+"mode_single_title" = "Single Button Mode";
+"mode_single_desc" = "Take turns speaking; language direction is auto-detected.";
+"mode_live_title" = "Live Mode";
+"mode_live_desc" = "Free conversation with continuous sentence segmentation.";
+"usage_guest" = "Guest mode: usage limit is not checked (for quick testing).";
+"usage_not_logged_in" = "Not logged in. Unable to fetch usage.";
+"usage_failed_no_response" = "Failed to load usage: no valid response.";
+"usage_failed_http" = "Failed to load usage (HTTP %d).";
+"usage_summary" = "Used %d min / %d min total, about %d min remaining";
+"usage_failed_network" = "Failed to load usage (network/parse error).";
+
+"back" = "Back";
+"logout_short" = "Exit";
+"auto_speak" = "Auto Speak";
+"live_no_tts" = "No TTS in Live Mode";
+"choose_language" = "Choose Language";
+"hold_to_talk" = "Hold to Talk";
+"hold_to_talk_short" = "Hold";
+"live_start" = "Start Live";
+"live_stop" = "Stop Live";
+"listening" = "Listening...";
+"translation_failed" = "[Translation failed]";
+"profile" = "Profile";
+"profile_usage_title" = "Remaining Free Time";
+"profile_no_email" = "No email available";
+"done" = "Done";
+"search_language" = "Search language";
+
+"lang_name_zh" = "Chinese";
+"lang_name_en" = "English";
+"lang_name_ja" = "Japanese";
+"lang_name_ko" = "Korean";
+
+"hold_to_talk_zh" = "Hold to Talk";
+"hold_to_talk_en" = "Hold to Talk";
+"hold_to_talk_ja" = "Hold to Talk";
+"hold_to_talk_ko" = "Hold to Talk";

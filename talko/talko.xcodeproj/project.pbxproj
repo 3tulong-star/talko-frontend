@@ -6,13 +6,34 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		660E02C82F54469900BACD4A /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 660E02C72F54469900BACD4A /* GoogleSignIn */; };
+		660E02CA2F54469900BACD4A /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 660E02C92F54469900BACD4A /* GoogleSignInSwift */; };
+		660E02CD2F54470800BACD4A /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 660E02CC2F54470800BACD4A /* FirebaseAuth */; };
+		660E02CF2F54470800BACD4A /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 660E02CE2F54470800BACD4A /* FirebaseCore */; };
+		660E02D12F54470800BACD4A /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 660E02D02F54470800BACD4A /* FirebaseFirestore */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		6661E41C2F53DE4F00617736 /* talko.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = talko.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		660E02D52F54472700BACD4A /* Exceptions for "talko" folder in "talko" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 6661E41B2F53DE4F00617736 /* talko */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		6661E41E2F53DE4F00617736 /* talko */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				660E02D52F54472700BACD4A /* Exceptions for "talko" folder in "talko" target */,
+			);
 			path = talko;
 			sourceTree = "<group>";
 		};
@@ -23,6 +44,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				660E02C82F54469900BACD4A /* GoogleSignIn in Frameworks */,
+				660E02CD2F54470800BACD4A /* FirebaseAuth in Frameworks */,
+				660E02CF2F54470800BACD4A /* FirebaseCore in Frameworks */,
+				660E02D12F54470800BACD4A /* FirebaseFirestore in Frameworks */,
+				660E02CA2F54469900BACD4A /* GoogleSignInSwift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +91,11 @@
 			);
 			name = talko;
 			packageProductDependencies = (
+				660E02C72F54469900BACD4A /* GoogleSignIn */,
+				660E02C92F54469900BACD4A /* GoogleSignInSwift */,
+				660E02CC2F54470800BACD4A /* FirebaseAuth */,
+				660E02CE2F54470800BACD4A /* FirebaseCore */,
+				660E02D02F54470800BACD4A /* FirebaseFirestore */,
 			);
 			productName = talko;
 			productReference = 6661E41C2F53DE4F00617736 /* talko.app */;
@@ -91,9 +122,20 @@
 			knownRegions = (
 				en,
 				Base,
+				"zh-Hans",
+				ja,
+				ko,
+				de,
+				fr,
+				es,
+				it,
 			);
 			mainGroup = 6661E4132F53DE4F00617736;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				660E02C62F54469900BACD4A /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+				660E02CB2F54470800BACD4A /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 6661E41D2F53DE4F00617736 /* Products */;
 			projectDirPath = "";
@@ -246,6 +288,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = talko/talko.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = ABV4FCB5A9;
@@ -254,7 +297,9 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "$(MARKETING_VERSION)";
+				INFOPLIST_FILE = talko/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = 1.0;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -291,6 +336,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = talko/talko.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = ABV4FCB5A9;
@@ -299,7 +345,9 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "$(MARKETING_VERSION)";
+				INFOPLIST_FILE = talko/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = 1.0;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -353,6 +401,53 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		660E02C62F54469900BACD4A /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.1.0;
+			};
+		};
+		660E02CB2F54470800BACD4A /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.10.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		660E02C72F54469900BACD4A /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 660E02C62F54469900BACD4A /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+		660E02C92F54469900BACD4A /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 660E02C62F54469900BACD4A /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
+		};
+		660E02CC2F54470800BACD4A /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 660E02CB2F54470800BACD4A /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		660E02CE2F54470800BACD4A /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 660E02CB2F54470800BACD4A /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		660E02D02F54470800BACD4A /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 660E02CB2F54470800BACD4A /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 6661E4142F53DE4F00617736 /* Project object */;
 }

@@ -1,0 +1,44 @@
+"login_subtitle" = "Assistant de traduction vocale en temps réel";
+"login_guest_mode" = "Mode invité (essai rapide)";
+"login_google" = "Continuer avec Google";
+"login_terms" = "En continuant, vous acceptez nos Conditions d'utilisation et notre Politique de confidentialité.";
+"login_failed" = "Échec de la connexion";
+"ok" = "OK";
+
+"usage_loading" = "Chargement du temps restant...";
+"logout" = "Se déconnecter";
+"mode_subtitle" = "Choisissez votre mode de traduction";
+"mode_dual_title" = "Mode double bouton";
+"mode_dual_desc" = "Contrôlez manuellement les tours de parole pour des échanges précis.";
+"mode_single_title" = "Mode bouton unique";
+"mode_single_desc" = "Parlez à tour de rôle ; la direction linguistique est détectée automatiquement.";
+"mode_live_title" = "Mode Live";
+"mode_live_desc" = "Conversation libre avec segmentation continue des phrases.";
+"usage_guest" = "Mode invité : la limite d'utilisation n'est pas vérifiée (test rapide).";
+"usage_not_logged_in" = "Non connecté. Impossible de récupérer l'utilisation.";
+"usage_failed_no_response" = "Échec du chargement : réponse invalide.";
+"usage_failed_http" = "Échec du chargement de l'utilisation (HTTP %d).";
+"usage_summary" = "%d min utilisées / %d min au total, env. %d min restantes";
+"usage_failed_network" = "Échec du chargement de l'utilisation (réseau/analyse).";
+
+"back" = "Retour";
+"logout_short" = "Quitter";
+"auto_speak" = "Lecture auto";
+"live_no_tts" = "Pas de TTS en mode Live";
+"choose_language" = "Choisir la langue";
+"hold_to_talk" = "Maintenir pour parler";
+"hold_to_talk_short" = "Parler";
+"live_start" = "Démarrer Live";
+"live_stop" = "Arrêter Live";
+"listening" = "Écoute...";
+"translation_failed" = "[Échec de la traduction]";
+
+"lang_name_zh" = "Chinois";
+"lang_name_en" = "Anglais";
+"lang_name_ja" = "Japonais";
+"lang_name_ko" = "Coréen";
+
+"hold_to_talk_zh" = "Maintenir pour parler";
+"hold_to_talk_en" = "Maintenir pour parler";
+"hold_to_talk_ja" = "Maintenir pour parler";
+"hold_to_talk_ko" = "Maintenir pour parler";

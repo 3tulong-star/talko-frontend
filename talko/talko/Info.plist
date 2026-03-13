@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>GIDClientID</key>
+	<string>62506090518-lqrt1e2vorf43daqu50upnntqt4iktfi.apps.googleusercontent.com</string>
+
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Talko 需要使用麦克风进行语音识别和翻译</string>
+
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.tulong.talko</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.62506090518-lqrt1e2vorf43daqu50upnntqt4iktfi</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>

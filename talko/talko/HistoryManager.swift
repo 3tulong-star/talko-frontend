@@ -1,7 +1,7 @@
 import Foundation
 import Combine
 
-struct Conversation: Identifiable, Codable {
+struct Conversation: Identifiable, Decodable {
     let id: String
     let title: String?
     let langLeft: String
@@ -37,7 +37,7 @@ struct Conversation: Identifiable, Codable {
     }
 }
 
-struct HistoryMessage: Identifiable, Codable {
+struct HistoryMessage: Identifiable, Decodable {
     let id: String
     let side: String
     let sourceLang: String

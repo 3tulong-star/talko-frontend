@@ -1,0 +1,49 @@
+"login_subtitle" = "实时语音翻译助手";
+"login_guest_mode" = "游客模式（快速体验）";
+"login_google" = "使用 Google 登录";
+"login_terms" = "登录即表示您同意我们的服务条款和隐私政策";
+"login_failed" = "登录失败";
+"ok" = "确定";
+
+"usage_loading" = "剩余时长加载中...";
+"logout" = "退出登录";
+"mode_subtitle" = "选择适合您的翻译模式";
+"mode_dual_title" = "双按钮模式";
+"mode_dual_desc" = "人工控制左右说话时机，适合精准对话";
+"mode_single_title" = "单按钮模式";
+"mode_single_desc" = "轮流按下说话，自动识别语种分配左右";
+"mode_live_title" = "Live 模式";
+"mode_live_desc" = "自由对话，持续识别分句，无须手动按键";
+"usage_guest" = "游客模式：不校验时长（仅用于快速测试）";
+"usage_not_logged_in" = "未登录，无法获取时长";
+"usage_failed_no_response" = "时长读取失败：无响应状态";
+"usage_failed_http" = "时长读取失败（HTTP %d）";
+"usage_summary" = "已用 %d 分钟 / 共 %d 分钟，剩余约 %d 分钟";
+"usage_failed_network" = "时长读取失败（解析/网络）";
+
+"back" = "返回";
+"logout_short" = "退出";
+"auto_speak" = "自动播报";
+"live_no_tts" = "Live 模式不播报";
+"choose_language" = "选择语言";
+"hold_to_talk" = "按住说话";
+"hold_to_talk_short" = "按住";
+"live_start" = "开始 Live";
+"live_stop" = "停止 Live";
+"listening" = "正在听...";
+"translation_failed" = "[翻译失败]";
+"profile" = "我的";
+"profile_usage_title" = "剩余免费时长";
+"profile_no_email" = "暂无邮箱信息";
+"done" = "完成";
+"search_language" = "搜索语言";
+
+"lang_name_zh" = "中文";
+"lang_name_en" = "英语";
+"lang_name_ja" = "日语";
+"lang_name_ko" = "韩语";
+
+"hold_to_talk_zh" = "按住说话";
+"hold_to_talk_en" = "按住说话";
+"hold_to_talk_ja" = "按住说话";
+"hold_to_talk_ko" = "按住说话";

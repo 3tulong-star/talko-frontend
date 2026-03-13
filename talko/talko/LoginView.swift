@@ -5,49 +5,57 @@ struct LoginView: View {
     @StateObject private var authManager = AuthManager.shared
     @State private var showError = false
     @State private var errorMessage = ""
-    
+
     var body: some View {
         ZStack {
-            Color(UIColor.systemGroupedBackground).ignoresSafeArea()
-            
-            VStack(spacing: 40) {
-                Spacer()
-                
-                // Logo & Title
-                VStack(spacing: 16) {
-                    Image(systemName: "bubble.left.and.exclamationmark.bubble.right.fill")
-                        .font(.system(size: 80))
-                        .foregroundColor(.blue)
-                        .symbolEffect(.bounce, value: authManager.isLoading)
-                    
+            LinearGradient(
+                colors: [AppTheme.pageBackground, Color.white],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+
+            Circle()
+                .fill(AppTheme.googleBlue.opacity(0.10))
+                .frame(width: 300, height: 300)
+                .blur(radius: 44)
+                .offset(x: -130, y: -320)
+
+            VStack(spacing: 26) {
+                Spacer(minLength: 14)
+
+                VStack(spacing: 14) {
+                    ZStack {
+                        Circle()
+                            .fill(AppTheme.subtleBlue)
+                            .frame(width: 112, height: 112)
+
+                        Image(systemName: "bubble.left.and.exclamationmark.bubble.right.fill")
+                            .font(.system(size: 50))
+                            .foregroundColor(.blue)
+                            .symbolEffect(.bounce, value: authManager.isLoading)
+                    }
+
                     Text("Talko")
-                        .font(.system(size: 48, weight: .bold, design: .rounded))
-                    
-                    Text("实时语音翻译助手")
+                        .font(.system(size: 46, weight: .bold, design: .rounded))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [.blue.opacity(0.95), .blue.opacity(0.7)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+
+                    Text(NSLocalizedString("login_subtitle", comment: ""))
                         .font(.subheadline)
                         .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 22)
                 }
-                
-                Spacer()
-                
-                // Login Buttons
-                VStack(spacing: 16) {
-                    Button {
-                        authManager.continueAsGuest()
-                    } label: {
-                        HStack(spacing: 10) {
-                            Image(systemName: "person.fill.questionmark")
-                            Text("游客模式（快速体验）")
-                                .font(.system(size: 18, weight: .semibold))
-                        }
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 54)
-                        .background(Color.orange)
-                        .cornerRadius(27)
-                    }
-                    .padding(.horizontal, 40)
 
+                Spacer(minLength: 0)
+
+                VStack(spacing: 12) {
                     // Apple Sign In
                     SignInWithAppleButton(.signIn) { request in
                         let nonce = authManager.startAppleSignIn()
@@ -72,64 +80,97 @@ struct LoginView: View {
                         }
                     }
                     .signInWithAppleButtonStyle(.black)
-                    .frame(height: 54)
-                    .cornerRadius(27)
-                    .padding(.horizontal, 40)
-                    
+                    .frame(height: 52)
+                    .cornerRadius(16)
+
                     // Google Sign In
                     Button {
                         signInWithGoogle()
                     } label: {
                         HStack(spacing: 12) {
-                            Image("google_logo") // 确保你工程里有这个图片，或者用系统图标代替
+                            Image("google_logo")
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 20, height: 20)
-                            
-                            Text("使用 Google 登录")
-                                .font(.system(size: 18, weight: .medium))
+
+                            Text(NSLocalizedString("login_google", comment: ""))
+                                .font(.system(size: 17, weight: .semibold))
                         }
-                        .foregroundColor(.black)
+                        .foregroundColor(.primary)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 54)
+                        .frame(height: 52)
                         .background(Color.white)
-                        .cornerRadius(27)
+                        .cornerRadius(16)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 27)
-                                .stroke(Color(UIColor.separator), lineWidth: 0.5)
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(Color.blue.opacity(0.2), lineWidth: 1)
                         )
                     }
-                    .padding(.horizontal, 40)
+
+                    Button {
+                        authManager.continueAsGuest()
+                    } label: {
+                        HStack(spacing: 9) {
+                            Image(systemName: "person.fill.questionmark")
+                            Text(NSLocalizedString("login_guest_mode", comment: ""))
+                                .font(.system(size: 16, weight: .semibold))
+                        }
+                        .foregroundColor(.blue)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(Color.blue.opacity(0.08))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .stroke(Color.blue.opacity(0.2), lineWidth: 1)
+                                )
+                        )
+                    }
                 }
+                .padding(.horizontal, 24)
+                .padding(.vertical, 18)
+                .background(
+                    RoundedRectangle(cornerRadius: 22)
+                        .fill(.white.opacity(0.9))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 22)
+                                .stroke(Color.blue.opacity(0.14), lineWidth: 1)
+                        )
+                )
+                .shadow(color: Color.blue.opacity(0.08), radius: 14, x: 0, y: 8)
+                .padding(.horizontal, 18)
                 .disabled(authManager.isLoading)
-                .opacity(authManager.isLoading ? 0.6 : 1.0)
-                
-                Text("登录即表示您同意我们的服务条款和隐私政策")
+                .opacity(authManager.isLoading ? 0.65 : 1.0)
+
+                Text(NSLocalizedString("login_terms", comment: ""))
                     .font(.caption2)
                     .foregroundColor(.secondary)
-                    .padding(.bottom, 20)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 16)
             }
-            
+
             if authManager.isLoading {
                 Color.black.opacity(0.2).ignoresSafeArea()
                 ProgressView()
-                    .scaleEffect(1.5)
+                    .scaleEffect(1.4)
                     .progressViewStyle(CircularProgressViewStyle(tint: .white))
             }
         }
-        .alert("登录失败", isPresented: $showError) {
-            Button("确定", role: .cancel) { }
+        .alert(NSLocalizedString("login_failed", comment: ""), isPresented: $showError) {
+            Button(NSLocalizedString("ok", comment: ""), role: .cancel) { }
         } message: {
             Text(errorMessage)
         }
     }
-    
+
     private func signInWithGoogle() {
         guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
               let rootViewController = windowScene.windows.first?.rootViewController else {
             return
         }
-        
+
         Task {
             do {
                 try await authManager.signInWithGoogle(presentingViewController: rootViewController)

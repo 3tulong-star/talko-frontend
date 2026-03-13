@@ -1,0 +1,44 @@
+"login_subtitle" = "Echtzeit-Sprachübersetzungsassistent";
+"login_guest_mode" = "Gastmodus (Schnelltest)";
+"login_google" = "Mit Google fortfahren";
+"login_terms" = "Mit dem Fortfahren stimmen Sie unseren Nutzungsbedingungen und der Datenschutzerklärung zu.";
+"login_failed" = "Anmeldung fehlgeschlagen";
+"ok" = "OK";
+
+"usage_loading" = "Verbleibende Zeit wird geladen...";
+"logout" = "Abmelden";
+"mode_subtitle" = "Wählen Sie Ihren bevorzugten Übersetzungsmodus";
+"mode_dual_title" = "Dual-Button-Modus";
+"mode_dual_desc" = "Sprechwechsel manuell steuern – ideal für präzise Gespräche.";
+"mode_single_title" = "Single-Button-Modus";
+"mode_single_desc" = "Abwechselnd sprechen; Sprachrichtung wird automatisch erkannt.";
+"mode_live_title" = "Live-Modus";
+"mode_live_desc" = "Freies Gespräch mit kontinuierlicher Satzerkennung.";
+"usage_guest" = "Gastmodus: Nutzungslimit wird nicht geprüft (nur zum Testen).";
+"usage_not_logged_in" = "Nicht angemeldet. Nutzung kann nicht geladen werden.";
+"usage_failed_no_response" = "Nutzung konnte nicht geladen werden: ungültige Antwort.";
+"usage_failed_http" = "Nutzung konnte nicht geladen werden (HTTP %d).";
+"usage_summary" = "%d Min verwendet / %d Min gesamt, ca. %d Min verbleibend";
+"usage_failed_network" = "Nutzung konnte nicht geladen werden (Netzwerk/Parsing-Fehler).";
+
+"back" = "Zurück";
+"logout_short" = "Beenden";
+"auto_speak" = "Automatisch vorlesen";
+"live_no_tts" = "Kein TTS im Live-Modus";
+"choose_language" = "Sprache wählen";
+"hold_to_talk" = "Zum Sprechen gedrückt halten";
+"hold_to_talk_short" = "Halten";
+"live_start" = "Live starten";
+"live_stop" = "Live stoppen";
+"listening" = "Hört zu...";
+"translation_failed" = "[Übersetzung fehlgeschlagen]";
+
+"lang_name_zh" = "Chinesisch";
+"lang_name_en" = "Englisch";
+"lang_name_ja" = "Japanisch";
+"lang_name_ko" = "Koreanisch";
+
+"hold_to_talk_zh" = "Zum Sprechen gedrückt halten";
+"hold_to_talk_en" = "Zum Sprechen gedrückt halten";
+"hold_to_talk_ja" = "Zum Sprechen gedrückt halten";
+"hold_to_talk_ko" = "Zum Sprechen gedrückt halten";
