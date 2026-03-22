@@ -30,6 +30,8 @@
 "hold_to_talk_short" = "押す";
 "live_start" = "ライブ開始";
 "live_stop" = "ライブ停止";
+"live_resume" = "ライブ再開";
+"live_playing_status" = "音声再生中";
 "listening" = "聞き取り中...";
 "translation_failed" = "[翻訳に失敗しました]";
 

@@ -14,7 +14,7 @@ struct InteractionMetrics {
 }
 
 @MainActor
-final class ConversationViewModel: ObservableObject {
+final class ConversationViewModel: NSObject, ObservableObject {
     private let wsURL = AppConfig.wsRealtimeURL
     private let httpBase = AppConfig.httpBaseURL
 
@@ -26,6 +26,7 @@ final class ConversationViewModel: ObservableObject {
     @Published var isHoldingB = false
     @Published var isHoldingSingle = false
     @Published var isLiveActive = false
+    @Published var isLivePlaybackPaused = false
     @Published var messages: [ChatMessage] = []
     @Published var latestMetrics: InteractionMetrics = InteractionMetrics()
 
@@ -44,28 +45,6 @@ final class ConversationViewModel: ObservableObject {
     private let qwenAudioNode = AVAudioPlayerNode()
     private var qwenAudioEngineReady = false
     private var qwenStreamActive = false
-    private var qwenStreamIsDucked = false
-    private var liveLocalSpeechActive = false
-    private var liveSpeechAccumMs: Double = 0
-    private var liveSilenceAccumMs: Double = 0
-    private var ttsStartedAt: Date? = nil
-    private var ttsStopGuardUntil: Date = .distantPast
-    private var ttsPostPlaybackGuardUntil: Date = .distantPast
-    private enum LiveBargeState {
-        case idle
-        case ttsPlaying
-        case probe
-        case confirmed
-    }
-    private var liveBargeState: LiveBargeState = .idle
-    private var liveBargeSpeechItemId: String? = nil
-    private var liveBargeSpeechDetectedAt: Date? = nil
-    private var liveBargeProbeChars: Int = 0
-    private var liveLastProbeSentAt: Date = .distantPast
-    private let liveProbeInterval: TimeInterval = 0.24
-    private let liveFallbackProbeInterval: TimeInterval = 1.2
-    private let liveBargeConfirmMinChars: Int = 5
-    private let liveBargeConfirmMinWindow: TimeInterval = 0.28
     private let liveDebugLogs: Bool = true
     private var previewTranslateTask: Task<Void, Never>? = nil
     private var lastPreviewSourceTextByMessage: [UUID: String] = [:]
@@ -84,7 +63,8 @@ final class ConversationViewModel: ObservableObject {
     var asrModelOverride: String? = nil
     var translationModelOverride: String? = nil
     var ttsModelOverride: String? = nil
-    var liveBargeInEnabled: Bool = true
+    // 暂时保留调试参数，当前已不再启用 echo guard / barge-in。
+    var liveBargeInEnabled: Bool = false
     var liveRmsThreshold: Double = 0.008
     var liveMinSpeechMs: Double = 120
     var liveMaxSilenceMs: Double = 450
@@ -109,11 +89,27 @@ final class ConversationViewModel: ObservableObject {
     private var isFinalizing: Bool = false
     private var finalTimeoutTask: Task<Void, Never>? = nil
 
+    private struct LivePlaybackContext {
+        let token: UUID
+        let messageId: UUID
+        let sentenceId: String
+        let asrMs: Int?
+        let translateMs: Int?
+        let totalBeforeTts: Int
+        var ttsProvider: String?
+        var ttsModel: String?
+        let startedAt: Date
+    }
+    private var livePlaybackContext: LivePlaybackContext? = nil
+    private var livePlaybackTask: Task<Void, Never>? = nil
+    private var liveStreamerSuspendedForPlayback = false
+
     // MARK: - Live state machine
     private enum LiveState {
         case idle
         case connecting
         case active
+        case playbackPaused
         case stopping
     }
     private var liveState: LiveState = .idle
@@ -125,7 +121,7 @@ final class ConversationViewModel: ObservableObject {
     private var liveLastActivityAt: Date = Date()
     private let liveIdleTimeoutSeconds: TimeInterval = 30
 
-    init() {
+    override init() {
         let preferred = Locale.preferredLanguages.first ?? "en"
         let code = Locale(identifier: preferred).languageCode ?? "en"
         let normalized = (code == "zh") ? "zh" : code
@@ -141,20 +137,34 @@ final class ConversationViewModel: ObservableObject {
             ? (supportedLangs.first(where: { $0.id != defaultLeft.id }) ?? defaultLeft)
             : defaultRight)
 
+        super.init()
+        tts.delegate = self
         setupCallbacks()
     }
 
-    private func configureLiveAudioSessionForAEC() {
+    private func configureLiveListeningAudioSession() {
         let session = AVAudioSession.sharedInstance()
         do {
-            try session.setCategory(.playAndRecord, mode: .videoChat, options: [.defaultToSpeaker, .allowBluetooth])
+            try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetoothA2DP, .allowBluetoothHFP])
             try session.setActive(true, options: [])
             try session.overrideOutputAudioPort(.speaker)
             let outputs = session.currentRoute.outputs.map { "\($0.portType.rawValue):\($0.portName)" }.joined(separator: ",")
             let inputs = session.currentRoute.inputs.map { "\($0.portType.rawValue):\($0.portName)" }.joined(separator: ",")
-            log("[AEC][live] enabled category=\(session.category.rawValue) mode=\(session.mode.rawValue) outputs=\(outputs) inputs=\(inputs)")
+            log("[Audio][live] listening category=\(session.category.rawValue) mode=\(session.mode.rawValue) outputs=\(outputs) inputs=\(inputs)")
         } catch {
-            log("[AEC][live] enable failed: \(error.localizedDescription)")
+            log("[Audio][live] listening config failed: \(error.localizedDescription)")
+        }
+    }
+
+    private func configureLivePlaybackAudioSession() {
+        let session = AVAudioSession.sharedInstance()
+        do {
+            try session.setCategory(.playback, mode: .default, options: [.duckOthers])
+            try session.setActive(true, options: [])
+            let outputs = session.currentRoute.outputs.map { "\($0.portType.rawValue):\($0.portName)" }.joined(separator: ",")
+            log("[Audio][live] playback category=\(session.category.rawValue) mode=\(session.mode.rawValue) outputs=\(outputs)")
+        } catch {
+            log("[Audio][live] playback config failed: \(error.localizedDescription)")
         }
     }
 
@@ -165,9 +175,9 @@ final class ConversationViewModel: ObservableObject {
             try session.setActive(true, options: [])
             let outputs = session.currentRoute.outputs.map { "\($0.portType.rawValue):\($0.portName)" }.joined(separator: ",")
             let inputs = session.currentRoute.inputs.map { "\($0.portType.rawValue):\($0.portName)" }.joined(separator: ",")
-            log("[AEC][live] restored category=\(session.category.rawValue) mode=\(session.mode.rawValue) outputs=\(outputs) inputs=\(inputs)")
+            log("[Audio][live] restored category=\(session.category.rawValue) mode=\(session.mode.rawValue) outputs=\(outputs) inputs=\(inputs)")
         } catch {
-            log("[AEC][live] restore failed: \(error.localizedDescription)")
+            log("[Audio][live] restore failed: \(error.localizedDescription)")
         }
     }
 
@@ -175,54 +185,8 @@ final class ConversationViewModel: ObservableObject {
         streamer.onAudioBuffer = { [weak self] base64 in
             guard let self else { return }
 
-            if self.mode == .live {
-                let now = Date()
-                let qwenPlaying = self.qwenAudioPlayer?.isPlaying ?? false
-                let isAnyTtsPlaying = self.tts.isSpeaking || qwenPlaying || self.qwenStreamActive
-                if let (rms, durationMs) = self.pcm16RmsAndDurationMs(fromBase64: base64) {
-                    self.updateLiveMicGate(rms: rms, durationMs: durationMs)
-                }
-
-                if isAnyTtsPlaying {
-                    if self.liveBargeState != .ttsPlaying && self.liveBargeState != .probe {
-                        self.liveBargeState = .ttsPlaying
-                        if liveDebugLogs { self.log("[LiveFlow] state=tts_playing") }
-                    }
-
-                    guard self.liveBargeInEnabled else { return }
-
-                    // 播放时默认不上行；仅按固定间隔发 probe 帧探测 speech_started
-                    if self.liveBargeState == .ttsPlaying {
-                        let interval = self.liveLocalSpeechActive ? self.liveProbeInterval : self.liveFallbackProbeInterval
-                        if now.timeIntervalSince(self.liveLastProbeSentAt) >= interval {
-                            self.liveLastProbeSentAt = now
-                            self.wsClient.sendAudio(base64: base64)
-                            if liveDebugLogs {
-                                self.log("[LiveFlow] probe_frame_sent active=\(self.liveLocalSpeechActive ? 1 : 0) interval=\(String(format: "%.2f", interval))")
-                            }
-                        }
-                    }
-
-                    // 进入 probe 后允许短窗上行，等待 text 确认
-                    if self.liveBargeState == .probe, self.liveLocalSpeechActive {
-                        self.wsClient.sendAudio(base64: base64)
-                    }
-                    return
-                }
-
-                // 非播放态：恢复 idle 并走正常上行
-                if self.liveBargeState != .idle {
-                    self.liveBargeState = .idle
-                    self.liveBargeSpeechItemId = nil
-                    self.liveBargeSpeechDetectedAt = nil
-                    self.liveBargeProbeChars = 0
-                    if liveDebugLogs { self.log("[LiveFlow] state=idle") }
-                }
-                self.restoreQwenStreamVolumeIfNeeded()
-
-                if now < self.ttsStopGuardUntil || now < self.ttsPostPlaybackGuardUntil {
-                    return
-                }
+            if self.mode == .live && self.isLivePlaybackPaused {
+                return
             }
 
             self.wsClient.sendAudio(base64: base64)
@@ -317,9 +281,30 @@ final class ConversationViewModel: ObservableObject {
             liveState = .stopping
             stopLiveAndFinalize()
 
+        case .playbackPaused:
+            log("Stopping Live mode from playback paused state")
+            isLiveActive = false
+            liveState = .stopping
+            stopLiveAndFinalize()
+
         case .stopping:
             log("Live is stopping, ignore toggle")
         }
+    }
+
+    func resumeLiveManually() {
+        guard mode == .live, isLiveActive, isLivePlaybackPaused else { return }
+        stopCurrentLivePlayback(resetState: false)
+        guard resumeLiveListeningAfterPlayback() else {
+            log("[Audio][live] manual resume failed to restart listener")
+            liveState = .idle
+            cleanupSession(stopPlayback: false)
+            return
+        }
+        isLivePlaybackPaused = false
+        liveState = .active
+        resetLiveIdleTimer()
+        log("[LiveFlow] playback_resumed manually")
     }
 
     func swapLanguages() {
@@ -344,6 +329,21 @@ final class ConversationViewModel: ObservableObject {
             ttsOverride: ttsProviderOverride
         )
 
+        if mode == .live, isLiveActive {
+            startLivePlayback(
+                text: text,
+                targetLang: target,
+                locale: route.ttsVoiceLocale,
+                provider: route.ttsProvider,
+                messageId: m.id,
+                sentenceId: m.id.uuidString,
+                asrMs: m.asrMs,
+                translateMs: m.translateMs,
+                totalBeforeTts: m.totalMs ?? ((m.asrMs ?? 0) + (m.translateMs ?? 0))
+            )
+            return
+        }
+
         Task {
             _ = await speak(text: text, targetLang: target, provider: route.ttsProvider, locale: route.ttsVoiceLocale)
         }
@@ -351,16 +351,20 @@ final class ConversationViewModel: ObservableObject {
 
     // MARK: - ASR core
 
-    private func start(side: Side) {
+    private func start(side: Side, createInitialMessage: Bool = true) {
         guard activeSide == nil, isFinalizing == false else { return }
 
         // 单/双按钮使用默认播放会话，不走 live AEC 会话
         restoreDefaultAudioSessionAfterLive()
 
         activeSide = side
-        let msg = ChatMessage(side: side)
-        messages.append(msg)
-        activeMsgId = msg.id
+        if createInitialMessage {
+            let msg = ChatMessage(side: side)
+            messages.append(msg)
+            activeMsgId = msg.id
+        } else {
+            activeMsgId = nil
+        }
 
         let wsMode = mode == .dualButton ? "dual_button" : (mode == .singleButton ? "single_button" : "live")
         let route = ProviderRouter.route(
@@ -398,17 +402,12 @@ final class ConversationViewModel: ObservableObject {
     }
 
     private func startSingleButton() {
-        start(side: .a)
+        start(side: .a, createInitialMessage: false)
     }
 
     private func startLive(sessionId: UUID) {
-        // live 模式不自动播报
-        autoSpeak = false
+        // live 模式保持当前 autoSpeak 设置；若开启则在播报期间暂停收音。
         // live 模式：不再启用 AEC 特殊会话（保持默认音频路由/音量表现）
-        liveLocalSpeechActive = false
-        liveSpeechAccumMs = 0
-        liveSilenceAccumMs = 0
-
         let route = ProviderRouter.route(
             source: langA.id,
             target: langB.id,
@@ -445,9 +444,12 @@ final class ConversationViewModel: ObservableObject {
         }
 
         do {
+            configureLiveListeningAudioSession()
             try streamer.start(preserveCurrentSession: true)
+            liveStreamerSuspendedForPlayback = false
             let session = AVAudioSession.sharedInstance()
-            log("[AEC][live] streamer started with category=\(session.category.rawValue) mode=\(session.mode.rawValue)")
+            let outputs = session.currentRoute.outputs.map { "\($0.portType.rawValue):\($0.portName)" }.joined(separator: ",")
+            log("[Audio][live] streamer started with category=\(session.category.rawValue) mode=\(session.mode.rawValue) outputs=\(outputs)")
             log("Streamer started (live)")
         } catch {
             log("Audio start error (live): \(error)")
@@ -462,6 +464,9 @@ final class ConversationViewModel: ObservableObject {
         liveIdleTask = Task {
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 1_000_000_000) // 每秒检查
+                if self.isLivePlaybackPaused {
+                    continue
+                }
                 if Date().timeIntervalSince(liveLastActivityAt) >= liveIdleTimeoutSeconds {
                     log("Live mode idle timeout (30s), stopping...")
                     await MainActor.run {
@@ -476,52 +481,8 @@ final class ConversationViewModel: ObservableObject {
         }
     }
 
-    private func pcm16RmsAndDurationMs(fromBase64 base64: String) -> (rms: Double, durationMs: Double)? {
-        guard let data = Data(base64Encoded: base64), data.count >= 2 else { return nil }
-        let sampleCount = data.count / MemoryLayout<Int16>.size
-        guard sampleCount > 0 else { return nil }
-
-        var sumSquares: Double = 0
-        data.withUnsafeBytes { raw in
-            let samples = raw.bindMemory(to: Int16.self)
-            for s in samples {
-                let normalized = Double(s) / 32768.0
-                sumSquares += normalized * normalized
-            }
-        }
-
-        let rms = sqrt(sumSquares / Double(sampleCount))
-        let durationMs = (Double(sampleCount) / 16000.0) * 1000.0
-        return (rms, durationMs)
-    }
-
-    private func updateLiveMicGate(rms: Double, durationMs: Double) {
-        let threshold = max(0.0, liveRmsThreshold)
-        let minSpeech = max(0.0, liveMinSpeechMs)
-        let maxSilence = max(10.0, liveMaxSilenceMs)
-
-        if rms >= threshold {
-            liveSpeechAccumMs += durationMs
-            liveSilenceAccumMs = 0
-            if liveSpeechAccumMs >= minSpeech {
-                liveLocalSpeechActive = true
-            }
-        } else {
-            liveSilenceAccumMs += durationMs
-            if liveSilenceAccumMs >= maxSilence {
-                liveLocalSpeechActive = false
-                liveSpeechAccumMs = 0
-            }
-        }
-
-        if liveLogRmsSamples {
-            log(String(format: "[LiveRMS] rms=%.6f speech=%.0fms silence=%.0fms active=%@ thr=%.3f",
-                       rms, liveSpeechAccumMs, liveSilenceAccumMs, liveLocalSpeechActive ? "1" : "0", threshold))
-        }
-    }
-
     private func handleLiveActivityEvent(_ event: [String: Any]) {
-        guard mode == .live, isLiveActive else { return }
+        guard mode == .live, isLiveActive, !isLivePlaybackPaused else { return }
         
         let type = event["type"] as? String ?? ""
         // 定义哪些事件算作“有效活动”
@@ -534,16 +495,6 @@ final class ConversationViewModel: ObservableObject {
         if type == "input_audio_buffer.speech_started",
            let itemId = event["item_id"] as? String {
             sentenceStartedAtMap[itemId] = Date()
-            let qwenPlaying = qwenAudioPlayer?.isPlaying ?? false
-            let isAnyTtsPlaying = tts.isSpeaking || qwenPlaying || qwenStreamActive
-            if isAnyTtsPlaying {
-                duckQwenStreamVolumeIfNeeded()
-                liveBargeState = .probe
-                liveBargeSpeechItemId = itemId
-                liveBargeSpeechDetectedAt = Date()
-                liveBargeProbeChars = 0
-                if liveDebugLogs { log("[LiveFlow] speech_started -> probe") }
-            }
         }
 
         if type == "conversation.item.input_audio_transcription.text",
@@ -556,33 +507,6 @@ final class ConversationViewModel: ObservableObject {
                 livePendingLangByItemId[itemId] = (source, target)
             }
             livePendingSideByItemId[itemId] = side
-        }
-
-        if type == "conversation.item.input_audio_transcription.text",
-           liveBargeState == .probe,
-           let itemId = event["item_id"] as? String,
-           itemId == liveBargeSpeechItemId {
-            let text = (event["text"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-            let stash = (event["stash"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-            liveBargeProbeChars += (text + stash).count
-
-            if let detectedAt = liveBargeSpeechDetectedAt,
-               Date().timeIntervalSince(detectedAt) >= liveBargeConfirmMinWindow,
-               liveBargeProbeChars >= liveBargeConfirmMinChars {
-                liveBargeState = .confirmed
-                if liveDebugLogs { log("[LiveFlow] barge_confirmed chars=\(liveBargeProbeChars)") }
-                tts.stopSpeaking(at: .immediate)
-                stopQwenStreamPlayback()
-                qwenAudioPlayer?.stop()
-                qwenAudioPlayer = nil
-                ttsStartedAt = nil
-                ttsStopGuardUntil = Date().addingTimeInterval(0.8)
-                liveBargeState = .idle
-                liveBargeSpeechItemId = nil
-                liveBargeSpeechDetectedAt = nil
-                liveBargeProbeChars = 0
-                if liveDebugLogs { log("[LiveFlow] tts_stopped_by_barge") }
-            }
         }
 
         if activityTypes.contains(type) {
@@ -648,17 +572,20 @@ final class ConversationViewModel: ObservableObject {
         finalTimeoutTask = nil
         liveIdleTask?.cancel()
         liveIdleTask = nil
+        livePlaybackTask?.cancel()
+        livePlaybackTask = nil
+        livePlaybackContext = nil
+        liveStreamerSuspendedForPlayback = false
         previewTranslateTask?.cancel()
         previewTranslateTask = nil
         lastPreviewSourceTextByMessage.removeAll()
         previewTranslatedMessageIds.removeAll()
 
+        isLiveActive = false
+        isLivePlaybackPaused = false
         streamer.stop()
         if stopPlayback {
-            tts.stopSpeaking(at: .immediate)
-            stopQwenStreamPlayback()
-            qwenAudioPlayer?.stop()
-            qwenAudioPlayer = nil
+            stopCurrentLivePlayback(resetState: false)
         }
         wsClient.disconnect()
 
@@ -670,10 +597,6 @@ final class ConversationViewModel: ObservableObject {
         isHoldingA = false
         isHoldingB = false
         isHoldingSingle = false
-        isLiveActive = false
-        liveLocalSpeechActive = false
-        liveSpeechAccumMs = 0
-        liveSilenceAccumMs = 0
         if mode == .live {
             liveState = .idle
         }
@@ -683,7 +606,7 @@ final class ConversationViewModel: ObservableObject {
         guard !text.isEmpty else { return }
 
         // 查找或创建活动消息
-        if mode == .live {
+        if mode == .live || mode == .singleButton {
             return
         }
 
@@ -700,9 +623,15 @@ final class ConversationViewModel: ObservableObject {
     }
 
     private func applyPartialEvent(_ event: [String: Any]) {
-        guard mode == .live else { return }
         guard let type = event["type"] as? String,
               type == "conversation.item.input_audio_transcription.text" else { return }
+
+        if mode == .singleButton {
+            applySingleButtonPartialEvent(event)
+            return
+        }
+
+        guard mode == .live else { return }
 
         guard let itemId = event["item_id"] as? String else { return }
         let uiSideStr = event["ui_side"] as? String
@@ -741,6 +670,57 @@ final class ConversationViewModel: ObservableObject {
         if liveDebugLogs {
             log("[LivePartial] item=\(itemId.prefix(6)) side=\(uiSideStr ?? (resolvedSide == .b ? "right" : "left")) source=\(source ?? resolvedLangs.0) target=\(target ?? resolvedLangs.1) text=\(text)")
         }
+    }
+
+    private func applySingleButtonPartialEvent(_ event: [String: Any]) {
+        let itemId = event["item_id"] as? String
+        let uiSideStr = event["ui_side"] as? String
+        let source = event["ui_source_lang"] as? String
+        let target = event["ui_target_lang"] as? String
+        let text = (event["text"] as? String ?? "") + (event["stash"] as? String ?? "")
+        guard !text.isEmpty else { return }
+
+        let inferredSide = inferSide(from: text)
+        let resolvedSide: Side = uiSideStr.map { $0 == "right" ? .b : .a } ?? inferredSide
+        let resolvedLangs: (String, String) = {
+            if let source, let target { return (source, target) }
+            return resolvedSide == .a ? (langA.id, langB.id) : (langB.id, langA.id)
+        }()
+
+        if let itemId {
+            livePendingSideByItemId[itemId] = resolvedSide
+            livePendingLangByItemId[itemId] = resolvedLangs
+        }
+
+        let messageId: UUID
+        if let itemId, let pendingMsgId = livePendingMessageIdByItemId[itemId] {
+            messageId = pendingMsgId
+        } else if let id = activeMsgId {
+            messageId = id
+            if let itemId {
+                livePendingMessageIdByItemId[itemId] = id
+            }
+        } else {
+            let msg = ChatMessage(side: resolvedSide)
+            messages.append(msg)
+            activeMsgId = msg.id
+            messageId = msg.id
+            if let itemId {
+                livePendingMessageIdByItemId[itemId] = msg.id
+            }
+        }
+
+        activeSide = resolvedSide
+
+        if let idx = messages.firstIndex(where: { $0.id == messageId }) {
+            messages[idx].side = resolvedSide
+            messages[idx].sourceLang = resolvedLangs.0
+            messages[idx].targetLang = resolvedLangs.1
+            messages[idx].originalPartial = text
+        }
+
+        let itemLabel = itemId.map { String($0.prefix(6)) } ?? "-"
+        log("[SinglePartial] item=\(itemLabel) side=\(uiSideStr ?? (resolvedSide == .b ? "right" : "left")) source=\(source ?? resolvedLangs.0) target=\(target ?? resolvedLangs.1) text=\(text)")
     }
 
     private func inferSide(from text: String) -> Side {
@@ -787,9 +767,10 @@ final class ConversationViewModel: ObservableObject {
             livePendingMessageIdByItemId[itemId] = nil
 
             let uiSideStr = event["ui_side"] as? String
-            let source = event["ui_source_lang"] as? String ?? pendingLang?.0 ?? langA.id
-            let target = event["ui_target_lang"] as? String ?? pendingLang?.1 ?? langB.id
-            let side: Side = uiSideStr.map { $0 == "right" ? .b : .a } ?? pendingSide ?? .a
+            let fallbackSide = pendingSide ?? activeSide ?? .a
+            let source = event["ui_source_lang"] as? String ?? pendingLang?.0 ?? (fallbackSide == .a ? langA.id : langB.id)
+            let target = event["ui_target_lang"] as? String ?? pendingLang?.1 ?? (fallbackSide == .a ? langB.id : langA.id)
+            let side: Side = uiSideStr.map { $0 == "right" ? .b : .a } ?? fallbackSide
             if liveDebugLogs {
                 log("[LiveFinal] item=\(itemId.prefix(6)) side=\(uiSideStr ?? (side == .b ? "right" : "left")) source=\(source) target=\(target)")
             }
@@ -899,8 +880,6 @@ final class ConversationViewModel: ObservableObject {
             messages[index].translationProvider = route.translationProvider.rawValue
             messages[index].translationModel = translationModelOverride ?? "provider-default"
 
-            let ttsMs: Int? = nil
-
             let totalMs = (asrMs ?? 0) + translateMs
             messages[index].asrMs = asrMs
             messages[index].translateMs = translateMs
@@ -909,10 +888,175 @@ final class ConversationViewModel: ObservableObject {
 
             latestMetrics = InteractionMetrics(sentenceId: sentenceId, asrMs: asrMs, translateMs: translateMs, ttsMs: nil, totalMs: totalMs)
             log("[Metrics] sentence=\(sentenceId.prefix(8)) asr=\(asrMs ?? -1)ms trans=\(translateMs)ms total=\(totalMs)ms")
+
+            if autoSpeak, !translated.isEmpty {
+                if mode == .live, isLiveActive {
+                    startLivePlayback(
+                        text: translated,
+                        targetLang: target,
+                        locale: route.ttsVoiceLocale,
+                        provider: route.ttsProvider,
+                        messageId: messages[index].id,
+                        sentenceId: sentenceId,
+                        asrMs: asrMs,
+                        translateMs: translateMs,
+                        totalBeforeTts: totalMs
+                    )
+                } else {
+                    Task { [weak self] in
+                        guard let self else { return }
+                        _ = await self.speak(
+                            text: translated,
+                            targetLang: target,
+                            provider: route.ttsProvider,
+                            locale: route.ttsVoiceLocale
+                        )
+                    }
+                }
+            }
         } catch {
             log("Translate error: \(error)")
             messages[index].translated = NSLocalizedString("translation_failed", comment: "")
             latestMetrics = InteractionMetrics(sentenceId: sentenceId, asrMs: asrMs, translateMs: nil, ttsMs: nil, totalMs: nil)
+        }
+    }
+
+    private func resolvedTtsModel(for provider: TTSProvider, locale: String) -> String {
+        switch provider {
+        case .apple:
+            return "apple-\(locale)"
+        case .qwen:
+            return ttsModelOverride?.isEmpty == false ? ttsModelOverride! : "qwen3-tts-flash-realtime"
+        }
+    }
+
+    private func stopCurrentLivePlayback(resetState: Bool) {
+        livePlaybackTask?.cancel()
+        livePlaybackTask = nil
+        livePlaybackContext = nil
+        tts.stopSpeaking(at: .immediate)
+        stopQwenStreamPlayback()
+        qwenAudioPlayer?.stop()
+        qwenAudioPlayer = nil
+
+        if resetState {
+            isLivePlaybackPaused = false
+            if mode == .live, isLiveActive {
+                liveState = .active
+                resetLiveIdleTimer()
+            }
+        }
+    }
+
+    private func suspendLiveStreamerForPlayback() {
+        guard mode == .live, !liveStreamerSuspendedForPlayback else { return }
+        streamer.stop()
+        liveStreamerSuspendedForPlayback = true
+        log("[Audio][live] listener suspended for playback")
+    }
+
+    private func resumeLiveListeningAfterPlayback() -> Bool {
+        guard mode == .live, isLiveActive else { return false }
+        configureLiveListeningAudioSession()
+        guard liveStreamerSuspendedForPlayback else { return true }
+
+        do {
+            try streamer.start(preserveCurrentSession: true)
+            liveStreamerSuspendedForPlayback = false
+            log("[Audio][live] listener resumed after playback")
+            return true
+        } catch {
+            log("[Audio][live] listener resume failed: \(error.localizedDescription)")
+            return false
+        }
+    }
+
+    private func startLivePlayback(
+        text: String,
+        targetLang: String,
+        locale: String,
+        provider: TTSProvider,
+        messageId: UUID,
+        sentenceId: String,
+        asrMs: Int?,
+        translateMs: Int?,
+        totalBeforeTts: Int
+    ) {
+        guard mode == .live, isLiveActive, !text.isEmpty else { return }
+
+        stopCurrentLivePlayback(resetState: false)
+        suspendLiveStreamerForPlayback()
+        configureLivePlaybackAudioSession()
+
+        let token = UUID()
+        livePlaybackContext = LivePlaybackContext(
+            token: token,
+            messageId: messageId,
+            sentenceId: sentenceId,
+            asrMs: asrMs,
+            translateMs: translateMs,
+            totalBeforeTts: totalBeforeTts,
+            ttsProvider: provider.rawValue,
+            ttsModel: resolvedTtsModel(for: provider, locale: locale),
+            startedAt: Date()
+        )
+        isLivePlaybackPaused = true
+        liveState = .playbackPaused
+        liveLastActivityAt = Date()
+        log("[LiveFlow] playback_paused provider=\(provider.rawValue)")
+
+        livePlaybackTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            let actualProvider = await self.speak(text: text, targetLang: targetLang, provider: provider, locale: locale)
+            guard !Task.isCancelled else { return }
+
+            if var context = self.livePlaybackContext, context.token == token {
+                context.ttsProvider = actualProvider.rawValue
+                context.ttsModel = self.resolvedTtsModel(for: actualProvider, locale: locale)
+                self.livePlaybackContext = context
+            }
+
+            if actualProvider == .qwen {
+                self.finishLivePlaybackIfNeeded(token: token)
+            } else {
+                self.livePlaybackTask = nil
+            }
+        }
+    }
+
+    private func finishLivePlaybackIfNeeded(token: UUID) {
+        guard let context = livePlaybackContext, context.token == token else { return }
+
+        let ttsMs = Int(Date().timeIntervalSince(context.startedAt) * 1000)
+        if let idx = messages.firstIndex(where: { $0.id == context.messageId }) {
+            messages[idx].ttsProvider = context.ttsProvider
+            messages[idx].ttsModel = context.ttsModel
+            messages[idx].ttsMs = ttsMs
+            messages[idx].totalMs = context.totalBeforeTts + ttsMs
+        }
+
+        latestMetrics = InteractionMetrics(
+            sentenceId: context.sentenceId,
+            asrMs: context.asrMs,
+            translateMs: context.translateMs,
+            ttsMs: ttsMs,
+            totalMs: context.totalBeforeTts + ttsMs
+        )
+
+        livePlaybackContext = nil
+        livePlaybackTask = nil
+
+        if mode == .live, isLiveActive {
+            guard resumeLiveListeningAfterPlayback() else {
+                isLivePlaybackPaused = false
+                liveState = .idle
+                cleanupSession(stopPlayback: false)
+                return
+            }
+            isLivePlaybackPaused = false
+            liveState = .active
+            resetLiveIdleTimer()
+            log("[LiveFlow] playback_finished resume_live")
         }
     }
 
@@ -1015,7 +1159,7 @@ final class ConversationViewModel: ObservableObject {
             qwenAudioEngine.prepare()
             qwenAudioEngineReady = true
         }
-        qwenAudioNode.volume = qwenStreamIsDucked ? clampedLiveDuckGain() : 1.0
+        qwenAudioNode.volume = 1.0
         if !qwenAudioEngine.isRunning {
             try qwenAudioEngine.start()
         }
@@ -1024,25 +1168,7 @@ final class ConversationViewModel: ObservableObject {
         }
     }
 
-    private func clampedLiveDuckGain() -> Float {
-        let clamped = min(max(liveDuckGain, 0.0), 1.0)
-        return Float(clamped)
-    }
-
-    private func duckQwenStreamVolumeIfNeeded() {
-        guard qwenStreamActive || qwenAudioNode.isPlaying else { return }
-        qwenAudioNode.volume = clampedLiveDuckGain()
-        qwenStreamIsDucked = true
-    }
-
-    private func restoreQwenStreamVolumeIfNeeded() {
-        guard qwenStreamIsDucked else { return }
-        qwenAudioNode.volume = 1.0
-        qwenStreamIsDucked = false
-    }
-
     private func stopQwenStreamPlayback() {
-        restoreQwenStreamVolumeIfNeeded()
         qwenStreamActive = false
 
         // 防御式停止：避免在节点/引擎状态切换瞬间重复 stop 导致断言
@@ -1058,7 +1184,11 @@ final class ConversationViewModel: ObservableObject {
         }
     }
 
-    private func playQwenPcmChunkBase64(_ b64: String) throws {
+    private func playQwenPcmChunkBase64(
+        _ b64: String,
+        callbackType: AVAudioPlayerNodeCompletionCallbackType? = nil,
+        completion: (() -> Void)? = nil
+    ) throws {
         guard let data = Data(base64Encoded: b64), !data.isEmpty else { return }
         let frameLength = UInt32(data.count / 2)
         guard frameLength > 0 else { return }
@@ -1072,7 +1202,31 @@ final class ConversationViewModel: ObservableObject {
             guard let dst = buffer.int16ChannelData?[0] else { return }
             dst.assign(from: src.bindMemory(to: Int16.self).baseAddress!, count: Int(frameLength))
         }
-        qwenAudioNode.scheduleBuffer(buffer, completionHandler: nil)
+        if let callbackType {
+            qwenAudioNode.scheduleBuffer(buffer, completionCallbackType: callbackType) { _ in
+                completion?()
+            }
+        } else {
+            qwenAudioNode.scheduleBuffer(buffer, completionHandler: nil)
+        }
+    }
+
+    private func awaitQwenPlaybackDrain() async throws {
+        let frameLength: AVAudioFrameCount = 1
+        guard let format = AVAudioFormat(commonFormat: .pcmFormatInt16, sampleRate: 24000, channels: 1, interleaved: true),
+              let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameLength),
+              let channelData = buffer.int16ChannelData else {
+            throw NSError(domain: "TTS", code: 34)
+        }
+
+        buffer.frameLength = frameLength
+        channelData[0][0] = 0
+
+        try await withCheckedThrowingContinuation { continuation in
+            qwenAudioNode.scheduleBuffer(buffer, completionCallbackType: .dataPlayedBack) { _ in
+                continuation.resume()
+            }
+        }
     }
 
     private func streamSpeakWithQwen(text: String, targetLang: String) async throws {
@@ -1097,15 +1251,14 @@ final class ConversationViewModel: ObservableObject {
         }
 
         try ensureQwenAudioEngine()
-        qwenStreamIsDucked = false
         qwenAudioNode.volume = 1.0
         qwenStreamActive = true
-        ttsStartedAt = Date()
-        ttsStopGuardUntil = .distantPast
-        ttsPostPlaybackGuardUntil = Date().addingTimeInterval(max(0.9, Double(text.count) * 0.03 + 0.35))
-        log("[EchoGuard][live] qwen tts start, postGuardUntil=\(ttsPostPlaybackGuardUntil)")
+        defer { qwenStreamActive = false }
+
+        var scheduledAudio = false
 
         for try await line in bytes.lines {
+            try Task.checkCancellation()
             if !qwenStreamActive { break }
             let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
             if trimmed.isEmpty { continue }
@@ -1114,6 +1267,7 @@ final class ConversationViewModel: ObservableObject {
             let type = obj["type"] as? String
             if type == "audio.delta", let delta = obj["delta"] as? String {
                 try playQwenPcmChunkBase64(delta)
+                scheduledAudio = true
             } else if type == "done" {
                 break
             } else if type == "error" {
@@ -1121,6 +1275,9 @@ final class ConversationViewModel: ObservableObject {
                 throw NSError(domain: "TTS", code: 33, userInfo: [NSLocalizedDescriptionKey: detail])
             }
         }
+
+        guard qwenStreamActive, scheduledAudio else { return }
+        try await awaitQwenPlaybackDrain()
     }
 
     private func speak(text: String, targetLang: String, provider: TTSProvider, locale: String) async -> TTSProvider {
@@ -1131,10 +1288,6 @@ final class ConversationViewModel: ObservableObject {
             let u = AVSpeechUtterance(string: text)
             u.rate = 0.5
             u.voice = AVSpeechSynthesisVoice(language: locale)
-            ttsStartedAt = Date()
-            ttsStopGuardUntil = .distantPast
-            ttsPostPlaybackGuardUntil = Date().addingTimeInterval(max(0.9, Double(text.count) * 0.03 + 0.35))
-            log("[EchoGuard][live] apple tts start, postGuardUntil=\(ttsPostPlaybackGuardUntil)")
             tts.speak(u)
             return .apple
 
@@ -1153,12 +1306,25 @@ final class ConversationViewModel: ObservableObject {
                 let u = AVSpeechUtterance(string: text)
                 u.rate = 0.5
                 u.voice = AVSpeechSynthesisVoice(language: locale)
-                ttsStartedAt = Date()
-                ttsStopGuardUntil = .distantPast
-                ttsPostPlaybackGuardUntil = Date().addingTimeInterval(max(0.9, Double(text.count) * 0.03 + 0.35))
                 tts.speak(u)
                 return .apple
             }
+        }
+    }
+}
+
+extension ConversationViewModel: AVSpeechSynthesizerDelegate {
+    nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
+        Task { @MainActor in
+            guard let context = self.livePlaybackContext,
+                  context.ttsProvider == TTSProvider.apple.rawValue else { return }
+            self.finishLivePlaybackIfNeeded(token: context.token)
+        }
+    }
+
+    nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
+        Task { @MainActor in
+            self.livePlaybackTask = nil
         }
     }
 }

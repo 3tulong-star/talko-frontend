@@ -30,6 +30,8 @@
 "hold_to_talk_short" = "Halten";
 "live_start" = "Live starten";
 "live_stop" = "Live stoppen";
+"live_resume" = "Live fortsetzen";
+"live_playing_status" = "Audio wird abgespielt";
 "listening" = "Hört zu...";
 "translation_failed" = "[Übersetzung fehlgeschlagen]";
 

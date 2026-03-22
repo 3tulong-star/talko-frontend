@@ -30,6 +30,8 @@
 "hold_to_talk_short" = "按住";
 "live_start" = "开始 Live";
 "live_stop" = "停止 Live";
+"live_resume" = "继续 Live";
+"live_playing_status" = "语音播放中";
 "listening" = "正在听...";
 "translation_failed" = "[翻译失败]";
 "profile" = "我的";

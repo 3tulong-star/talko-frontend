@@ -200,25 +200,39 @@ struct ContentView: View {
                 .padding(.horizontal)
 
             case .live:
-                Button {
-                    vm.toggleLive()
-                } label: {
-                    HStack(spacing: 10) {
-                        if vm.isLiveActive {
-                            LiveActiveMiniWave()
-                            Image(systemName: "stop.fill")
-                        } else {
-                            Image(systemName: "play.fill")
-                        }
-                        Text(vm.isLiveActive ? NSLocalizedString("live_stop", comment: "") : NSLocalizedString("live_start", comment: ""))
+                VStack(spacing: 8) {
+                    if vm.isLivePlaybackPaused {
+                        Text(NSLocalizedString("live_playing_status", comment: ""))
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(AppTheme.googleBlue)
                     }
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 54)
-                    .background(vm.isLiveActive ? Color.red.opacity(0.90) : AppTheme.googleBlue)
-                    .cornerRadius(27)
-                    .shadow(color: (vm.isLiveActive ? Color.red : AppTheme.googleBlue).opacity(0.25), radius: 10, x: 0, y: 6)
+
+                    Button {
+                        if vm.isLivePlaybackPaused {
+                            vm.resumeLiveManually()
+                        } else {
+                            vm.toggleLive()
+                        }
+                    } label: {
+                        HStack(spacing: 10) {
+                            if vm.isLivePlaybackPaused {
+                                Image(systemName: "arrow.clockwise")
+                            } else if vm.isLiveActive {
+                                LiveActiveMiniWave()
+                                Image(systemName: "stop.fill")
+                            } else {
+                                Image(systemName: "play.fill")
+                            }
+                            Text(livePrimaryButtonTitle)
+                        }
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 54)
+                        .background(livePrimaryButtonColor)
+                        .cornerRadius(27)
+                        .shadow(color: livePrimaryButtonColor.opacity(0.25), radius: 10, x: 0, y: 6)
+                    }
                 }
                 .padding(.horizontal)
             }
@@ -243,6 +257,22 @@ struct ContentView: View {
     private func scrollToBottom(proxy: ScrollViewProxy) {
         guard let last = vm.messages.last else { return }
         withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
+    }
+
+    private var livePrimaryButtonTitle: String {
+        if vm.isLivePlaybackPaused {
+            return NSLocalizedString("live_resume", comment: "")
+        }
+        return vm.isLiveActive
+            ? NSLocalizedString("live_stop", comment: "")
+            : NSLocalizedString("live_start", comment: "")
+    }
+
+    private var livePrimaryButtonColor: Color {
+        if vm.isLivePlaybackPaused {
+            return AppTheme.googleBlue
+        }
+        return vm.isLiveActive ? Color.red.opacity(0.90) : AppTheme.googleBlue
     }
 }
 

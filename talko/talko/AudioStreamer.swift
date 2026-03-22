@@ -17,9 +17,16 @@ final class AudioStreamer: NSObject {
         let inputNode = audioEngine.inputNode
         let inputFormat = inputNode.inputFormat(forBus: 0)
         print("AudioStreamer input format:", inputFormat.sampleRate, inputFormat.channelCount)
+        guard inputFormat.sampleRate > 0, inputFormat.channelCount > 0 else {
+            throw NSError(
+                domain: "AudioStreamer",
+                code: -2,
+                userInfo: [NSLocalizedDescriptionKey: "Invalid input format: sampleRate=\(inputFormat.sampleRate), channels=\(inputFormat.channelCount)"]
+            )
+        }
 
         guard let targetFormat = AVAudioFormat(
-            commonFormat: .pcmFormatInt16,
+            commonFormat: .pcmFormatFloat32,
             sampleRate: 16000,
             channels: 1,
             interleaved: false
@@ -34,9 +41,10 @@ final class AudioStreamer: NSObject {
         inputNode.installTap(onBus: 0, bufferSize: bufferSize, format: inputFormat) { [weak self] buffer, _ in
             guard let self, let converter = self.converter else { return }
             if buffer.frameLength == 0 { return }
+            guard buffer.format.sampleRate > 0, targetFormat.sampleRate > 0 else { return }
 
-            let ratio = inputFormat.sampleRate / targetFormat.sampleRate
-            let capacity = AVAudioFrameCount(Double(buffer.frameLength) / ratio) + 1
+            let outputFrames = ceil(Double(buffer.frameLength) * targetFormat.sampleRate / buffer.format.sampleRate)
+            let capacity = max(1, AVAudioFrameCount(outputFrames))
             guard let converted = AVAudioPCMBuffer(pcmFormat: targetFormat, frameCapacity: capacity) else { return }
 
             var error: NSError?
@@ -46,10 +54,19 @@ final class AudioStreamer: NSObject {
             }
             if status == .error || error != nil { return }
             if converted.frameLength == 0 { return }
-            guard let ch = converted.int16ChannelData else { return }
+            guard let ch = converted.floatChannelData else { return }
 
-            let len = Int(converted.frameLength) * MemoryLayout<Int16>.size
-            let data = Data(bytes: ch[0], count: len)
+            let frames = Int(converted.frameLength)
+            let len = frames * MemoryLayout<Int16>.size
+            var data = Data(count: len)
+            data.withUnsafeMutableBytes { rawBuffer in
+                let out = rawBuffer.bindMemory(to: Int16.self)
+                for i in 0..<frames {
+                    let sample = max(-1.0 as Float, min(1.0 as Float, ch[0][i]))
+                    let scaled = Int16(max(-32768, min(32767, Int((Double(sample) * 32767.0).rounded()))))
+                    out[i] = scaled.littleEndian
+                }
+            }
             self.onAudioBuffer?(data.base64EncodedString())
         }
 

@@ -30,6 +30,8 @@
 "hold_to_talk_short" = "누르기";
 "live_start" = "라이브 시작";
 "live_stop" = "라이브 중지";
+"live_resume" = "라이브 계속";
+"live_playing_status" = "음성 재생 중";
 "listening" = "듣는 중...";
 "translation_failed" = "[번역 실패]";
 
