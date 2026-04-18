@@ -4,9 +4,18 @@
 "login_terms" = "Continuando, accetti i nostri Termini di servizio e l'Informativa sulla privacy.";
 "login_failed" = "Accesso non riuscito";
 "ok" = "OK";
+"cancel" = "Annulla";
 
 "usage_loading" = "Caricamento tempo rimanente...";
 "logout" = "Disconnetti";
+"profile_account_section" = "Account e privacy";
+"privacy_policy" = "Informativa sulla privacy";
+"delete_account" = "Elimina account";
+"delete_account_title" = "Eliminare l'account?";
+"delete_account_message" = "Questa azione rimuoverà l'account attualmente connesso nell'app. Se la sessione è troppo vecchia, Apple o Google potrebbero chiederti di accedere di nuovo prima che l'eliminazione vada a buon fine.";
+"delete_account_confirm" = "Elimina";
+"delete_account_failed_title" = "Impossibile eliminare l'account";
+"delete_account_requires_recent_login" = "Per motivi di sicurezza, accedi di nuovo e poi riprova a eliminare l'account.";
 "mode_subtitle" = "Scegli la modalità di traduzione";
 "mode_dual_title" = "Modalità doppio pulsante";
 "mode_dual_desc" = "Controlla manualmente i turni di parola per conversazioni precise.";

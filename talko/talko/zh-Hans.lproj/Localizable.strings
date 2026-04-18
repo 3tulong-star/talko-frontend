@@ -37,6 +37,15 @@
 "profile" = "我的";
 "profile_usage_title" = "剩余免费时长";
 "profile_no_email" = "暂无邮箱信息";
+"profile_account_section" = "账号与隐私";
+"privacy_policy" = "隐私政策";
+"delete_account" = "删除账号";
+"delete_account_title" = "确认删除账号？";
+"delete_account_message" = "这会删除当前账号在应用内的登录身份。如果登录状态过旧，Apple 或 Google 可能会要求您重新登录后再删除。";
+"delete_account_confirm" = "删除";
+"delete_account_failed_title" = "删除账号失败";
+"delete_account_requires_recent_login" = "出于安全原因，请重新登录后再尝试删除账号。";
+"cancel" = "取消";
 "done" = "完成";
 "search_language" = "搜索语言";
 

@@ -5,6 +5,7 @@ import FirebaseAuth
 
 @main
 struct talkoApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var authManager: AuthManager
     @StateObject private var subscriptionManager: SubscriptionManager
     @State private var selectedMode: ConversationMode? = nil
@@ -15,11 +16,6 @@ struct talkoApp: App {
     @State private var textKeyboardVisible: Bool = false
 
     init() {
-        // Firebase 初始化：必须在使用 FirebaseAuth/GoogleSignIn 前完成
-        if FirebaseApp.app() == nil {
-            FirebaseApp.configure()
-        }
-
         let tabBarAppearance = UITabBarAppearance()
         tabBarAppearance.configureWithTransparentBackground()
         tabBarAppearance.backgroundEffect = nil

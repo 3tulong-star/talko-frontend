@@ -37,6 +37,15 @@
 "profile" = "Profile";
 "profile_usage_title" = "Remaining Free Time";
 "profile_no_email" = "No email available";
+"profile_account_section" = "Account & Privacy";
+"privacy_policy" = "Privacy Policy";
+"delete_account" = "Delete Account";
+"delete_account_title" = "Delete Account?";
+"delete_account_message" = "This will remove your current app account login. If your session is old, Apple or Google may ask you to sign in again before deletion succeeds.";
+"delete_account_confirm" = "Delete";
+"delete_account_failed_title" = "Unable to Delete Account";
+"delete_account_requires_recent_login" = "For security reasons, please sign in again and then retry deleting your account.";
+"cancel" = "Cancel";
 "done" = "Done";
 "search_language" = "Search language";
 

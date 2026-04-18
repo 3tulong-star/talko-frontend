@@ -10,7 +10,7 @@ struct ModeSelectionView: View {
     // nil = usage 未读取成功，先允许进入模式，避免页面“点了没反应”
     @State private var remainingSeconds: Int? = nil
 
-    private let httpBase = URL(string: "https://tulong.zeabur.app")!
+    private let httpBase = AppConfig.httpBaseURL
 
     var body: some View {
         NavigationStack {
@@ -57,6 +57,7 @@ struct ModeSelectionView: View {
                                 selectedMode = .live
                             }
 
+#if DEBUG
                             NavigationLink {
                                 LiveProviderTestView()
                             } label: {
@@ -97,6 +98,7 @@ struct ModeSelectionView: View {
                                 )
                             }
                             .buttonStyle(.plain)
+#endif
                         }
                         .padding(.horizontal, 20)
                         .padding(.vertical, 8)

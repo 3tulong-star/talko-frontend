@@ -61,6 +61,65 @@ final class AuthManager: ObservableObject {
             print("Error signing out: \(error.localizedDescription)")
         }
     }
+
+    func deleteCurrentAccount() async throws {
+        if isGuestMode {
+            isGuestMode = false
+            user = nil
+            return
+        }
+
+        guard let currentUser = Auth.auth().currentUser else {
+            throw NSError(
+                domain: "AuthManager",
+                code: -1,
+                userInfo: [NSLocalizedDescriptionKey: "No signed-in account to delete."]
+            )
+        }
+
+        isLoading = true
+        defer { isLoading = false }
+
+        let idToken = try await currentUser.getIDToken()
+        try await deleteBackendAccountData(idToken: idToken)
+        try await currentUser.delete()
+
+        GIDSignIn.sharedInstance.signOut()
+        do {
+            try Auth.auth().signOut()
+        } catch {
+            print("Error signing out after deletion: \(error.localizedDescription)")
+        }
+
+        isGuestMode = false
+        user = nil
+    }
+
+    private func deleteBackendAccountData(idToken: String) async throws {
+        var request = URLRequest(url: AppConfig.httpBaseURL.appendingPathComponent("/api/v1/account/me"))
+        request.httpMethod = "DELETE"
+        request.setValue("Bearer \(idToken)", forHTTPHeaderField: "Authorization")
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse else {
+            throw NSError(
+                domain: "AuthManager",
+                code: -2,
+                userInfo: [NSLocalizedDescriptionKey: "Invalid server response while deleting account."]
+            )
+        }
+
+        guard (200...299).contains(http.statusCode) else {
+            let backendMessage = try? JSONDecoder().decode(DeleteAccountErrorResponse.self, from: data)
+            throw NSError(
+                domain: "AuthManager",
+                code: http.statusCode,
+                userInfo: [
+                    NSLocalizedDescriptionKey: backendMessage?.error ?? "Failed to delete backend account data."
+                ]
+            )
+        }
+    }
     
     // MARK: - Apple Sign In
     
@@ -144,4 +203,8 @@ final class AuthManager: ObservableObject {
         let hashString = hashedData.compactMap { String(format: "%02x", $0) }.joined()
         return hashString
     }
+}
+
+private struct DeleteAccountErrorResponse: Decodable {
+    let error: String
 }

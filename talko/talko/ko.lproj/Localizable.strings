@@ -4,9 +4,18 @@
 "login_terms" = "계속하면 서비스 약관 및 개인정보처리방침에 동의하는 것으로 간주됩니다.";
 "login_failed" = "로그인 실패";
 "ok" = "확인";
+"cancel" = "취소";
 
 "usage_loading" = "남은 시간을 불러오는 중...";
 "logout" = "로그아웃";
+"profile_account_section" = "계정 및 개인정보";
+"privacy_policy" = "개인정보처리방침";
+"delete_account" = "계정 삭제";
+"delete_account_title" = "계정을 삭제할까요?";
+"delete_account_message" = "현재 앱에 로그인된 계정을 삭제합니다. 세션이 오래된 경우 삭제를 완료하기 전에 Apple 또는 Google에서 다시 로그인하라고 요청할 수 있습니다.";
+"delete_account_confirm" = "삭제";
+"delete_account_failed_title" = "계정을 삭제할 수 없습니다";
+"delete_account_requires_recent_login" = "보안을 위해 다시 로그인한 뒤 계정 삭제를 다시 시도해 주세요.";
 "mode_subtitle" = "원하는 번역 모드를 선택하세요";
 "mode_dual_title" = "듀얼 버튼 모드";
 "mode_dual_desc" = "발화 순서를 수동으로 제어해 정확한 대화를 지원합니다.";

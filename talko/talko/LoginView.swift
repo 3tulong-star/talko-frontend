@@ -148,6 +148,10 @@ struct LoginView: View {
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 24)
+
+                Link(NSLocalizedString("privacy_policy", comment: ""), destination: AppConfig.privacyPolicyURL)
+                    .font(.caption.weight(.semibold))
+                    .foregroundColor(.blue)
                     .padding(.bottom, 16)
             }
 

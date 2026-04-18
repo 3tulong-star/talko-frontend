@@ -4,9 +4,18 @@
 "login_terms" = "Mit dem Fortfahren stimmen Sie unseren Nutzungsbedingungen und der Datenschutzerklärung zu.";
 "login_failed" = "Anmeldung fehlgeschlagen";
 "ok" = "OK";
+"cancel" = "Abbrechen";
 
 "usage_loading" = "Verbleibende Zeit wird geladen...";
 "logout" = "Abmelden";
+"profile_account_section" = "Konto und Datenschutz";
+"privacy_policy" = "Datenschutzerklärung";
+"delete_account" = "Konto löschen";
+"delete_account_title" = "Konto löschen?";
+"delete_account_message" = "Dadurch wird das aktuell in der App angemeldete Konto entfernt. Wenn Ihre Sitzung zu alt ist, fordert Apple oder Google Sie möglicherweise auf, sich vor dem Löschen erneut anzumelden.";
+"delete_account_confirm" = "Löschen";
+"delete_account_failed_title" = "Konto konnte nicht gelöscht werden";
+"delete_account_requires_recent_login" = "Bitte melden Sie sich aus Sicherheitsgründen erneut an und versuchen Sie dann erneut, Ihr Konto zu löschen.";
 "mode_subtitle" = "Wählen Sie Ihren bevorzugten Übersetzungsmodus";
 "mode_dual_title" = "Dual-Button-Modus";
 "mode_dual_desc" = "Sprechwechsel manuell steuern – ideal für präzise Gespräche.";

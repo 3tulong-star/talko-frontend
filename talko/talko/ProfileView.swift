@@ -7,8 +7,11 @@ struct ProfileView: View {
 
     @State private var usageText: String = NSLocalizedString("usage_loading", comment: "")
     @State private var usageTextColor: Color = .secondary
+    @State private var showDeleteConfirmation = false
+    @State private var isDeletingAccount = false
+    @State private var deletionErrorMessage: String?
 
-    private let httpBase = URL(string: "https://tulong.zeabur.app")!
+    private let httpBase = AppConfig.httpBaseURL
     let onSignedOut: () -> Void
 
     var body: some View {
@@ -36,6 +39,18 @@ struct ProfileView: View {
                 .background(Color(UIColor.secondarySystemGroupedBackground))
                 .cornerRadius(16)
 
+                VStack(alignment: .leading, spacing: 12) {
+                    Text(NSLocalizedString("profile_account_section", comment: ""))
+                        .font(.headline)
+
+                    Link(NSLocalizedString("privacy_policy", comment: ""), destination: AppConfig.privacyPolicyURL)
+                        .font(.subheadline.weight(.semibold))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
+                .background(Color(UIColor.secondarySystemGroupedBackground))
+                .cornerRadius(16)
+
                 Button(role: .destructive) {
                     authManager.signOut()
                     onSignedOut()
@@ -49,6 +64,24 @@ struct ProfileView: View {
                 .buttonStyle(.borderedProminent)
                 .tint(.red)
 
+                Button(role: .destructive) {
+                    showDeleteConfirmation = true
+                } label: {
+                    if isDeletingAccount {
+                        ProgressView()
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 50)
+                    } else {
+                        Text(NSLocalizedString("delete_account", comment: ""))
+                            .font(.system(size: 16, weight: .semibold))
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 50)
+                    }
+                }
+                .buttonStyle(.bordered)
+                .tint(.red)
+                .disabled(isDeletingAccount)
+
                 Spacer()
             }
             .padding()
@@ -61,6 +94,25 @@ struct ProfileView: View {
             }
             .task {
                 await refreshUsage()
+            }
+            .alert(NSLocalizedString("delete_account_title", comment: ""), isPresented: $showDeleteConfirmation) {
+                Button(NSLocalizedString("cancel", comment: ""), role: .cancel) {}
+                Button(NSLocalizedString("delete_account_confirm", comment: ""), role: .destructive) {
+                    Task { await deleteAccount() }
+                }
+            } message: {
+                Text(NSLocalizedString("delete_account_message", comment: ""))
+            }
+            .alert(
+                NSLocalizedString("delete_account_failed_title", comment: ""),
+                isPresented: Binding(
+                    get: { deletionErrorMessage != nil },
+                    set: { if !$0 { deletionErrorMessage = nil } }
+                )
+            ) {
+                Button(NSLocalizedString("ok", comment: ""), role: .cancel) {}
+            } message: {
+                Text(deletionErrorMessage ?? "")
             }
         }
     }
@@ -99,6 +151,25 @@ struct ProfileView: View {
         } catch {
             usageText = NSLocalizedString("usage_failed_network", comment: "")
             usageTextColor = .red
+        }
+    }
+
+    private func deleteAccount() async {
+        isDeletingAccount = true
+        defer { isDeletingAccount = false }
+
+        do {
+            try await authManager.deleteCurrentAccount()
+            onSignedOut()
+            dismiss()
+        } catch {
+            let nsError = error as NSError
+            if nsError.domain == AuthErrorDomain,
+               nsError.code == AuthErrorCode.requiresRecentLogin.rawValue {
+                deletionErrorMessage = NSLocalizedString("delete_account_requires_recent_login", comment: "")
+            } else {
+                deletionErrorMessage = error.localizedDescription
+            }
         }
     }
 }
